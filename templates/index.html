@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Image Classifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(99, 102, 241, 0.4);
+            border-radius: 16px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: #cbd5e1;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        #preview-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        #preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .result-warning {
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .class-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #4ade80;
+        }
+
+        .confidence {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .warning-text {
+            color: #fbbf24;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>SATELLITE AI</h1>
+
+        <div class="upload-area" onclick="document.getElementById('file-input').click()">
+            <div class="upload-label">
+                <span class="upload-icon">🛰️</span>
+                <span>Click to upload satellite image</span>
+                <small style="color: #64748b">(JPG/PNG formats)</small>
+            </div>
+            <input type="file" id="file-input" accept="image/*" onchange="previewFile()">
+        </div>
+
+        <div id="preview-container">
+            <img id="preview-image" src="#" alt="Preview">
+        </div>
+
+        <button id="predict-btn" class="btn" style="display: none;" onclick="uploadImage()">Analyze Image</button>
+
+        <div class="loader" id="loader"></div>
+
+        <div id="result">
+            <div class="class-name" id="res-class">---</div>
+            <div class="confidence" id="res-conf">Confidence: 0%</div>
+        </div>
+    </div>
+
+    <script>
+        function previewFile() {
+            const preview = document.getElementById('preview-image');
+            const file = document.getElementById('file-input').files[0];
+            const container = document.getElementById('preview-container');
+            const btn = document.getElementById('predict-btn');
+            const resultDiv = document.getElementById('result');
+
+            const reader = new FileReader();
+
+            reader.onloadend = function () {
+                preview.src = reader.result;
+                container.style.display = 'block';
+                btn.style.display = 'inline-block';
+                resultDiv.style.display = 'none';
+            }
+
+            if (file) {
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = "";
+                container.style.display = 'none';
+                btn.style.display = 'none';
+            }
+        }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById('file-input');
+            const btn = document.getElementById('predict-btn');
+            const loader = document.getElementById('loader');
+            const resultDiv = document.getElementById('result');
+            const resClass = document.getElementById('res-class');
+            const resConf = document.getElementById('res-conf');
+            const resWarning = document.getElementById('res-warning');
+
+            if (!fileInput.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            btn.disabled = true;
+            loader.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    const confPercent = (data.confidence * 100).toFixed(1);
+                    resClass.innerText = data.class;
+                    resConf.innerText = `Confidence: ${confPercent}%`;
+
+                    resultDiv.style.display = 'block';
+                    resultDiv.className = 'result-success';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Prediction failed');
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
