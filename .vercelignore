@@ -1,0 +1,12 @@
+# Exclude training data and scripts
+train_model.py
+download_data.py
+datasets/
+data/
+outputs/
+.git
+.venv
+__pycache__
+*.pyc
+tests/
+kagglehub/

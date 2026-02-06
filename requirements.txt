@@ -1,11 +1,9 @@
-torch
-torchvision
+--find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+torch==2.5.1+cpu
+torchvision==0.20.1+cpu
 numpy
-matplotlib
-scikit-learn
 pillow
-requests
-tqdm
-kagglehub
 flask
 flask-cors
+gunicorn
+
